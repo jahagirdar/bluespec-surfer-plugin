@@ -10,6 +10,7 @@ on:
   # Allow manual runs
   workflow_dispatch:
 
+
 jobs:
   ## JOB 1: BUILD AND UPLOAD ARTIFACTS (MATRIX) ##
   build:
@@ -21,6 +22,17 @@ jobs:
     steps:
       - name: ⚙️ Checkout Repository
         uses: actions/checkout@v4
+      - name: 📥 Clone 'surfer' Dependency
+        # This step clones the external repo into a sibling directory
+        run: |
+          # Go up one directory (to the runner workspace root)
+          cd ..
+          # Clone the repository. The folder name MUST be 'surfer'
+          git clone https://gitlab.com/surfer-project/surfer.git surfer
+          # Go back into your project's directory to continue the workflow
+          cd ${{ github.workspace }}
+          # Verify the dependency sub-directory exists (optional sanity check)
+          ls -F ../surfer/surfer-translation-types/
 
       - name: 🛠️ Setup Rust Toolchain
         uses: actions-rs/toolchain@v1
