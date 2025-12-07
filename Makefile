@@ -1,3 +1,3 @@
 default:
-	cargo build --release
-	cp ../target/wasm32-unknown-unknown/release/Bluespec_Translator.wasm /home/vijayvithal/.local/share/surfer/translators/
+	cargo build --release --target wasm32-unknown-unknown
+	cp target/wasm32-unknown-unknown/release/bluespec_translator.wasm /home/vijayvithal/.local/share/surfer/translators/

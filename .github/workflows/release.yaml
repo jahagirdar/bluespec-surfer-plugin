@@ -1,0 +1,95 @@
+name: Rust Multi-OS Build and Release
+
+on:
+  # Trigger on push to main
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*' # Also trigger when a version tag (e.g., v1.0.0) is pushed
+  # Allow manual runs
+  workflow_dispatch:
+
+jobs:
+  ## JOB 1: BUILD AND UPLOAD ARTIFACTS (MATRIX) ##
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    steps:
+      - name: ⚙️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Setup Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+
+      - name: 🏗️ Build Project (Release)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target wasm32-unknown-unknown
+
+      # --- Artifact Handling ---
+      - name: 💾 Set Artifact Name and Path
+        id: set_vars
+        run: |
+          # Determine the OS name for the artifact's file name
+          case ${{ matrix.os }} in
+            ubuntu-latest)
+              os_name="linux"
+              ;;
+            macos-latest)
+              os_name="macos"
+              ;;
+            windows-latest)
+              os_name="windows"
+              ;;
+            *)
+              os_name="unknown"
+              ;;
+          esac
+          
+          # Set the output variable for the artifact name
+          echo "artifact_name=bluespec_translator_${os_name}.wasm" >> $GITHUB_OUTPUT
+
+      - name: 📤 Upload Artifact
+        # Uploads the file with the unique name (e.g., bluespec_translator_linux.wasm)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.set_vars.outputs.artifact_name }}
+          path: target/wasm32-unknown-unknown/release/bluespec_translator.wasm
+
+
+  ## JOB 2: RELEASE ARTIFACTS ##
+  release:
+    # This job only runs if all 'build' jobs succeeded
+    needs: build
+    
+    # This job runs only when a version tag (e.g., v1.0.0) is pushed
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ⬇️ Download All Artifacts
+        # Downloads all artifacts created by the 'build' jobs into the current workspace
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts # Downloads artifacts into the 'artifacts/' directory
+
+      - name: 📦 List Downloaded Files
+        # Sanity check to ensure files are present
+        run: ls -R artifacts/
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # The action automatically uses the tag that triggered the workflow (e.g., v1.0.0)
+          files: artifacts/*/*.wasm
+          draft: false
+          prerelease: false

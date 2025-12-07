@@ -1,0 +1,275 @@
+{
+    "top"   : "mkTop",
+    "mkTop" : {
+        "typedefs" : {
+            "test1::Bar_st" : [{
+                "var"   : "f.c",
+                "type"  : "test1::Colors_e",
+                "width" : 6,
+                "min"   : 58,
+                "max"   : 63
+            },{
+                "var"   : "f.b",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 21,
+                "min"   : 37,
+                "max"   : 57
+            },{
+                "var"   : "a",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 10,
+                "min"   : 27,
+                "max"   : 36
+            },{
+                "var"   : "t.c",
+                "type"  : "test1::Colors_e",
+                "width" : 6,
+                "min"   : 21,
+                "max"   : 26
+            },{
+                "var"   : "t.b",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 21,
+                "min"   : 0,
+                "max"   : 20
+            }],
+            "Clock"         : [],
+            "Bool"          : [{
+                "var"   : "",
+                "type"  : "Bool",
+                "width" : 1,
+                "min"   : 0,
+                "max"   : 0
+            }],
+            "Bit#(32)"      : [{
+                "var"   : "",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 32,
+                "min"   : 0,
+                "max"   : 31
+            }],
+            "test1::Foo_st" : [{
+                "var"   : "c",
+                "type"  : "test1::Colors_e",
+                "width" : 6,
+                "min"   : 21,
+                "max"   : 26
+            },{
+                "var"   : "b",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 21,
+                "min"   : 0,
+                "max"   : 20
+            }],
+            "Reset"         : []
+        },
+        "blocks"   : {
+            "rb"        : {
+                "type"  : "RegA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST",
+                    "type" : "Reset"
+                },{
+                    "var"  : "D_IN",
+                    "type" : "test1::Foo_st"
+                },{
+                    "var"  : "EN",
+                    "type" : "Bool"
+                },{
+                    "var"  : "Q_OUT",
+                    "type" : "test1::Foo_st"
+                }]
+            },
+            "aa_braax"  : {
+                "type"  : "RegA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST",
+                    "type" : "Reset"
+                },{
+                    "var"  : "D_IN",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN",
+                    "type" : "Bool"
+                },{
+                    "var"  : "Q_OUT",
+                    "type" : "test1::Bar_st"
+                }]
+            },
+            "aa_inst_a" : {
+                "type"  : "mkA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST_N",
+                    "type" : "Reset"
+                },{
+                    "var"  : "a_x",
+                    "type" : "Bit#(32)"
+                },{
+                    "var"  : "a_b",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "RDY_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "c",
+                    "type" : "test1::Foo_st"
+                },{
+                    "var"  : "RDY_c",
+                    "type" : "Bool"
+                }]
+            },
+            "ab_braax"  : {
+                "type"  : "RegA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST",
+                    "type" : "Reset"
+                },{
+                    "var"  : "D_IN",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN",
+                    "type" : "Bool"
+                },{
+                    "var"  : "Q_OUT",
+                    "type" : "test1::Bar_st"
+                }]
+            },
+            "ab_inst_a" : {
+                "type"  : "mkA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST_N",
+                    "type" : "Reset"
+                },{
+                    "var"  : "a_x",
+                    "type" : "Bit#(32)"
+                },{
+                    "var"  : "a_b",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "RDY_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "c",
+                    "type" : "test1::Foo_st"
+                },{
+                    "var"  : "RDY_c",
+                    "type" : "Bool"
+                }]
+            },
+            "ac"        : {
+                "type"  : "mkA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST_N",
+                    "type" : "Reset"
+                },{
+                    "var"  : "a_x",
+                    "type" : "Bit#(32)"
+                },{
+                    "var"  : "a_b",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "RDY_a",
+                    "type" : "Bool"
+                },{
+                    "var"  : "c",
+                    "type" : "test1::Foo_st"
+                },{
+                    "var"  : "RDY_c",
+                    "type" : "Bool"
+                }]
+            }
+        }
+    },
+    "mkA"   : {
+        "typedefs" : {
+            "test1::Bar_st" : [{
+                "var"   : "f.c",
+                "type"  : "test1::Colors_e",
+                "width" : 6,
+                "min"   : 58,
+                "max"   : 63
+            },{
+                "var"   : "f.b",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 21,
+                "min"   : 37,
+                "max"   : 57
+            },{
+                "var"   : "a",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 10,
+                "min"   : 27,
+                "max"   : 36
+            },{
+                "var"   : "t.c",
+                "type"  : "test1::Colors_e",
+                "width" : 6,
+                "min"   : 21,
+                "max"   : 26
+            },{
+                "var"   : "t.b",
+                "type"  : "Bit#(numeric type a)",
+                "width" : 21,
+                "min"   : 0,
+                "max"   : 20
+            }],
+            "Clock"         : [],
+            "Bool"          : [{
+                "var"   : "",
+                "type"  : "Bool",
+                "width" : 1,
+                "min"   : 0,
+                "max"   : 0
+            }],
+            "Reset"         : []
+        },
+        "blocks"   : {
+            "rb" : {
+                "type"  : "RegA",
+                "ports" : [{
+                    "var"  : "CLK",
+                    "type" : "Clock"
+                },{
+                    "var"  : "RST",
+                    "type" : "Reset"
+                },{
+                    "var"  : "D_IN",
+                    "type" : "test1::Bar_st"
+                },{
+                    "var"  : "EN",
+                    "type" : "Bool"
+                },{
+                    "var"  : "Q_OUT",
+                    "type" : "test1::Bar_st"
+                }]
+            }
+        }
+    }
+}
