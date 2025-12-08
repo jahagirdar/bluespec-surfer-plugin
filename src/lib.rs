@@ -244,10 +244,11 @@ pub fn process_typedefs(
     Ok(bsv_types)
 }
 
-const IGNORED_PORTS: [&str; 3] = ["CLK", "RST", "EN"];
-const PREFERRED_PORTS: [&str; 3] = ["Q_OUT", "Probe", "D_IN"];
+const IGNORED_PORTS: [&str; 8] = ["CLK", "RST", "EN", "CLR","FULL_N","EMPTY_N","ENQ","DEQ"];
+const PREFERRED_PORTS: [&str; 4] = ["Q_OUT","D_OUT", "Probe", "D_IN"];
 
 // *** MODIFIED: Function signature now accepts HashMap<String, ModuleBlock> ***
+
 pub fn process_blocks(
     raw_blocks: HashMap<String, ModuleBlock> 
 ) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
