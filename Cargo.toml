@@ -15,3 +15,4 @@ surfer-translation-types = { path = "../surfer/surfer-translation-types", featur
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 once_cell = "1.18" # Or the latest stable version you prefer
+regex = "1"
