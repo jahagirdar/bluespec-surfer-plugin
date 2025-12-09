@@ -2,7 +2,7 @@
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
 
-use extism_pdk::{plugin_fn, FnResult, Json, Error, warn };
+use extism_pdk::{plugin_fn, FnResult, Json, Error, debug };
 
 pub use surfer_translation_types::plugin_types::TranslateParams;
 use surfer_translation_types::{
@@ -68,7 +68,7 @@ pub fn translates(variable: VariableMeta<(), ()>) -> FnResult<TranslationPrefere
     let category = bsv_lookup_guard.get(&type_name);
 
     // 3. Dispatch based on category
-    warn!("Translates: Category = {:?}",category);
+    debug!("Translates: Category = {:?}",category);
     match category {
         // Types that require structural modification or symbol lookups:
         Some(TypeCategory::Struct) | Some(TypeCategory::Union) |
@@ -104,7 +104,7 @@ pub fn translates(variable: VariableMeta<(), ()>) -> FnResult<TranslationPrefere
 pub fn translate(params: Json<TranslateParams>) -> FnResult<TranslationResult> {
     let variable = &params.0.variable;
     let value = &params.0.value;
-    warn!("translate: {:?} \n value={:?}", variable, value);
+    debug!("translate: {:?} \n value={:?}", variable, value);
 
     // 1. Get type metadata (clone out of mutex)
     let type_name = get_variable_type_name(variable)
@@ -135,13 +135,13 @@ pub fn translate(params: Json<TranslateParams>) -> FnResult<TranslationResult> {
 
     // 4. Validate width match
     if vcd_width != type_width {
-        warn!("Width mismatch: VCD={} bits, Type={} bits. Using type width.", vcd_width, type_width);
+        debug!("Width mismatch: VCD={} bits, Type={} bits. Using type width.", vcd_width, type_width);
     }
 
     // 5. Call translator with CORRECT width
-    warn!("Calling TranslateRecursive with {:?} {:?} {:?}",struct_def,type_width,digits_vec);
+    debug!("Calling TranslateRecursive with {:?} {:?} {:?}",struct_def,type_width,digits_vec);
     let tr = translate_recursive(&struct_def, type_width, &digits_vec);
-    warn!("translate return value {:?}",tr);
+    //debug!("translate return value {:?}",tr);
     Ok(tr)
 }
 

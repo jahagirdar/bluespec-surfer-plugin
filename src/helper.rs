@@ -35,7 +35,7 @@ pub type BSVLookupGuard<'a> = RwLockReadGuard<'a, HashMap<String, TypeCategory>>
 //         match $mutex.lock() {
 //             Ok(guard) => guard,
 //             Err(poisoned) => {
-//                 extism_pdk::warn!("Mutex poisoned, recovering: {:?}", poisoned);
+//                 extism_pdk::debug!("Mutex poisoned, recovering: {:?}", poisoned);
 //                 poisoned.into_inner()
 //             }
 //         }

@@ -2,7 +2,7 @@
 // src/translators.rs (Revised)
 // =========================================================================
 
-use extism_pdk::{warn};
+use extism_pdk::{debug};
 use std::collections::HashMap; // <--- ADDED
 
 // Import necessary types from external crate
@@ -98,7 +98,7 @@ ValueRepr,
 
 // Note: This function is assumed to be called with the canonical type name
 pub fn translate_enum(type_name: &str, _width: usize, digits: &str) -> TranslationResult {
-    warn!("translate_enum: called with type_name {:?}, _width {:?}, digits {:?}", type_name, _width, digits);
+    debug!("translate_enum: called with type_name {:?}, _width {:?}, digits {:?}", type_name, _width, digits);
     let typedefs_guard = BSV_TYPEDEFS.read().unwrap();
     let struct_def = typedefs_guard.get(type_name);
 
@@ -155,7 +155,7 @@ pub fn translate_data_by_category(
 
             if is_failure {
                 // Requirement: Return Error Kind with value "Error" idx 0
-                warn!("ENUM FAIL: No tag match found for {} in segment '{}'", segment.type_name,
+                debug!("ENUM FAIL: No tag match found for {} in segment '{}'", segment.type_name,
                       segment.name.clone().unwrap_or_default());
                 TranslationResult {
                     val: ValueRepr::String("Error".to_string()),
@@ -191,7 +191,7 @@ pub fn translate_data_by_category(
         // Default Fallback
         _ => {
             // Defaulting unhandled types (like arrays, or unknown) to Bits
-            warn!("Unhandled TypeCategory {:?} for {}. Falling back to Bits.",
+            debug!("Unhandled TypeCategory {:?} for {}. Falling back to Bits.",
                   type_category, segment.type_name);
             TranslationResult {
                 val: ValueRepr::Bits(segment_width as u64, chunk_str),
@@ -213,11 +213,11 @@ pub fn translate_compound(
     // 1. Lookup the structure definition by name
     if let Some(struct_def) = bsv_typedefs_guard.get(&segment.type_name) {
         // Requirement: For each segment call translate_recursive()
-        warn!("TR-RECURSE: Entering Compound struct '{}'", segment.type_name);
+        debug!("TR-RECURSE: Entering Compound struct '{}'", segment.type_name);
         translate_recursive(struct_def, segment_width, chunk_slice)
     } else {
         // Compound type category found, but definition is missing -> Fallback
-        warn!("TR-FAIL: Struct category found for '{}', but typedef is missing. Falling back to Bits.",
+        debug!("TR-FAIL: Struct category found for '{}', but typedef is missing. Falling back to Bits.",
               segment.type_name);
 
         let chunk_str: String = chunk_slice.iter().collect();
@@ -269,7 +269,7 @@ pub fn translate_recursive(
         let result =
             // 🌟 PRIORITY 1: Inlined Nested Structure (e.g., Compound type without a name lookup)
             if let Some(ref nested_struct_def) = segment.nested_structure {
-                warn!("TR-RECURSE: Recursing into inlined nested structure for field '{}'", name);
+                debug!("TR-RECURSE: Recursing into inlined nested structure for field '{}'", name);
                 translate_recursive(nested_struct_def, segment_width, chunk_slice)
 
             // PRIORITY 2: Global Type Category Lookup
@@ -285,7 +285,7 @@ pub fn translate_recursive(
             }
             // PRIORITY 3: Unknown Type Name -> Fallback to Bits
             else {
-                warn!("TR-WARN: Unknown type '{}', falling back to Bits#({})",
+                debug!("TR-WARN: Unknown type '{}', falling back to Bits#({})",
                       segment.type_name, segment_width);
                 let chunk_str: String = chunk_slice.iter().collect();
                 TranslationResult {
@@ -320,7 +320,7 @@ fn extract_bit_chunk<'a>(
     let end_idx = start_idx + segment_width;
 
     if end_idx > digits.len() {
-        // ... (boundary check and warning) ...
+        // ... (boundary check and debuging) ...
         return None;
     }
 

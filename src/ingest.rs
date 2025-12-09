@@ -18,7 +18,7 @@ use crate::helper::{
 // ... rest of ingest.rs functions ...
 // Now `RawBlockPort`, `TypeSegment`, `TypeStructure`, `TypeCategory`,
 // `RawBlockDefinition`, `ModuleData`, and the `BSV_` statics should resolve.
-use extism_pdk::{ warn};
+use extism_pdk::{ debug};
 use serde::Deserialize;
 use std::collections::HashMap;
 use serde_json::Value; 
@@ -29,7 +29,7 @@ use serde_json::Value;
 //         match $mutex.lock() {
 //             Ok(guard) => guard,
 //             Err(poisoned) => {
-//                 extism_pdk::warn!("Mutex poisoned, recovering: {:?}", poisoned);
+//                 extism_pdk::debug!("Mutex poisoned, recovering: {:?}", poisoned);
 //                 poisoned.into_inner()
 //             }
 //         }
@@ -182,7 +182,7 @@ fn process_nested_segments(raw_segments: Vec<RawSegment>) -> Result<Vec<TypeSegm
 fn process_typedef(type_name: &str, raw_value_ref: Value, bsv_typedefs: &mut HashMap<String, TypeStructure>, bsv_lookup: &mut HashMap<String, TypeCategory>) -> Result<(), Box<dyn std::error::Error>> {
 
     if type_name.starts_with("Bit#(") || type_name == "Bool" || type_name == "Clock" || type_name == "Reset" {
-        warn!("INGEST: Explicitly marking primitive type '{}' as Bits.", type_name);
+        debug!("INGEST: Explicitly marking primitive type '{}' as Bits.", type_name);
         bsv_lookup.insert(type_name.to_string(), TypeCategory::Bits);
         return Ok(());
     }
@@ -279,7 +279,7 @@ pub fn initialize_static_data() -> Result<(), Box<dyn std::error::Error>> {
     let map_file_bytes = read_bsv_file("bluespec_map.json");
     
     if bsv_file_bytes.is_empty() { return Err(Box::<dyn std::error::Error>::from("Failed to read bluespec.json")); }
-    if map_file_bytes.is_empty() { warn!("Warning: Failed to read bluespec_map.json. Scope path resolution may be limited."); }
+    if map_file_bytes.is_empty() { debug!("Warning: Failed to read bluespec_map.json. Scope path resolution may be limited."); }
 
     let file_content: DesignFile = serde_json::from_slice(&bsv_file_bytes)?; 
     let map_content: ModuleMapContent = serde_json::from_slice(&map_file_bytes)?;
@@ -292,7 +292,7 @@ pub fn initialize_static_data() -> Result<(), Box<dyn std::error::Error>> {
     for (module_name, module_content) in file_content.modules {
         for (type_name, raw_value_ref) in module_content.typedefs.iter() {
             if let Err(e) = process_typedef(type_name, raw_value_ref.clone(), &mut bsv_typedefs, &mut bsv_lookup) {
-                warn!("Error processing typedef '{}': {}", type_name, e);
+                debug!("Error processing typedef '{}': {}", type_name, e);
             }
         }
         
@@ -300,9 +300,9 @@ pub fn initialize_static_data() -> Result<(), Box<dyn std::error::Error>> {
         
         bsv_modules_map.insert(module_name, ModuleData { blocks: module_blocks });
     }
-    warn!("bsv_typedefs {:?}",bsv_typedefs);
-    warn!("bsv_lookup {:?}",bsv_lookup);
-    warn!("bsv_modules {:?}",bsv_modules_map);
+    debug!("bsv_typedefs {:?}",bsv_typedefs);
+    debug!("bsv_lookup {:?}",bsv_lookup);
+    debug!("bsv_modules {:?}",bsv_modules_map);
     
     // --- Assign Static Globals ---
 //   *BSV_TYPEDEFS.lock().unwrap() = bsv_typedefs; 
