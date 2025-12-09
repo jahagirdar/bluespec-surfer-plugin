@@ -169,12 +169,27 @@ pub fn translate_data_by_category(
 
         // Case 2: BITS
         TypeCategory::Bits => {
+            if segment_width == 1 {
+                // Case: Single-bit value (e.g., Bit#(1))
+
+                // Get the single character ('0' or '1'). We can unwrap safely
+                // because we know the width is 1.
+                let bit_char = *chunk_slice.first().unwrap_or(&'X');
+
+                TranslationResult {
+                    // Use ValueRepr::Bit(char) for single bits
+                    val: ValueRepr::Bit(bit_char),
+                    subfields: vec![],
+                    kind: ValueKind::Normal,
+                }
+            } else {
             // Requirement: If data is Bits return Bits
             TranslationResult {
                 val: ValueRepr::Bits(segment_width as u64, chunk_str),
                 subfields: vec![],
                 kind: ValueKind::Normal,
             }
+                }
         }
 
         // Case 3: COMPOUND (Struct/Union)
