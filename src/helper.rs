@@ -2,43 +2,54 @@
 // src/helper.rs (Revised)
 // =========================================================================
 use once_cell::sync::Lazy;     // <--- ADDED
-use std::sync::Mutex;          // <--- ADDED
-use extism_pdk::Error;         // <--- ADDED (or whatever necessary from extism_pdk)
+use std::sync::RwLock;          // <--- ADDED
+use std::sync::RwLockReadGuard;          // <--- ADDED
+                               //
 
 // --- Expose Data Structures (Must be pub) ---
 
 // Maps original scope path to implementation module names: {top: {mkTop: [main, top]}}
-pub static BSV_MAPS: Lazy<Mutex<HashMap<String, HashMap<String, Vec<String>>>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
+pub static BSV_MAPS: Lazy<RwLock<HashMap<String, HashMap<String, Vec<String>>>>> = Lazy::new(|| {
+    RwLock::new(HashMap::new())
 });
 
 // Stores processed module information for block lookup: {mkTop: {blocks: {rb: RawBlockDefinition, ...}}}
-pub static BSV_MODULES: Lazy<Mutex<HashMap<String, ModuleData>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
+pub static BSV_MODULES: Lazy<RwLock<HashMap<String, ModuleData>>> = Lazy::new(|| {
+    RwLock::new(HashMap::new())
 });
 
 // Unflattened and unique type definitions: {test1::Bar_st: TypeStructure}
-pub static BSV_TYPEDEFS: Lazy<Mutex<HashMap<String, TypeStructure>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
+pub static BSV_TYPEDEFS: Lazy<RwLock<HashMap<String, TypeStructure>>> = Lazy::new(|| {
+    RwLock::new(HashMap::new())
 });
 
 // Lookup table for type category: {test1::Colors_e: Enum, test1::Bar_st: Struct}
-pub static BSV_LOOKUP: Lazy<Mutex<HashMap<String, TypeCategory>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
+pub static BSV_LOOKUP: Lazy<RwLock<HashMap<String, TypeCategory>>> = Lazy::new(|| {
+    RwLock::new(HashMap::new())
 });
 
-
+pub type BSVTypedefsGuard<'a> = RwLockReadGuard<'a, HashMap<String, TypeStructure>>;
+pub type BSVLookupGuard<'a> = RwLockReadGuard<'a, HashMap<String, TypeCategory>>;
+// macro_rules! lock {
+//     ($mutex:expr) => {
+//         match $mutex.lock() {
+//             Ok(guard) => guard,
+//             Err(poisoned) => {
+//                 extism_pdk::warn!("Mutex poisoned, recovering: {:?}", poisoned);
+//                 poisoned.into_inner()
+//             }
+//         }
+//     };
+// }
 
 // --- Utility Functions (Must be pub if used by other modules) ---
-use extism_pdk::{warn};
 use serde::Deserialize;
 use std::collections::HashMap;
 use regex::Regex;
 
 use surfer_translation_types::{
-    SubFieldTranslationResult, TranslationResult, ValueKind, VariableInfo,
-    VariableMeta, VariableValue, TranslationPreference, 
-    translator::{VariableNameInfo}, 
+     TranslationResult,
+    VariableMeta,
     // Removed StructInfo and FieldInfo imports (E0432) as VariableInfo::Compound is expected.
 };
 // -------------------------------------------------------------------------
@@ -48,8 +59,11 @@ use surfer_translation_types::{
 #[derive(Debug, Clone)]
 pub enum TypeCategory {
     Bits,
-    Struct,
     Enum,
+    Bool,
+    Struct,
+    Union,
+    Interface,
     // Add more types here as needed
 }
 
@@ -66,6 +80,7 @@ pub struct TypeSegment {
 pub struct TypeStructure {
     pub total_width: usize,
     pub segments: Vec<TypeSegment>,
+    pub enum_definition: Option<EnumDefinition>,
 }
 
 #[derive(Debug, Clone)]
@@ -107,6 +122,7 @@ pub fn create_no_translation_result() -> TranslationResult {
 const IGNORED_PORTS: [&str; 8] = ["CLK", "RST", "EN", "CLR","FULL_N","EMPTY_N","ENQ","DEQ"];
 const PREFERRED_PORTS: [&str; 4] = ["Q_OUT","D_OUT", "Probe", "D_IN"];
 
+#[derive(Debug)]
 enum SignalNameFormat {
     FullVar(String),        // e.g., "rb" -> checks preferred ports of module "rb"
     PortedVar(String),      // e.g., "rb_D_OUT" -> uses type of port "D_OUT" on "rb"
@@ -120,7 +136,9 @@ fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
     if let Some(caps) = re.captures(name) {
         let base_name = caps.name("base").unwrap().as_str().to_string();
         let port_name = caps.name("port").unwrap().as_str().to_string();
-        return (base_name, SignalNameFormat::PortedVar(port_name));
+        if PREFERRED_PORTS.contains(&port_name.as_str()) {
+            return (base_name, SignalNameFormat::PortedVar(port_name));
+        }
     }
 
     // Default to FullVar
@@ -130,8 +148,8 @@ fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
 // --- Core Variable Type Resolution Logic ---
 
 pub fn get_current_module(scope_path: &[String]) -> Result<String, Box<dyn std::error::Error>> {
-    let bsv_maps = BSV_MAPS.lock().unwrap();
-    let bsv_modules = BSV_MODULES.lock().unwrap();
+    let bsv_maps = BSV_MAPS.read().unwrap();
+    let bsv_modules = BSV_MODULES.read().unwrap();
 
     let mut module_name: Option<String> = None;
     let mut path_start_index: usize = 0;
@@ -163,7 +181,7 @@ pub fn get_current_module(scope_path: &[String]) -> Result<String, Box<dyn std::
 
 pub fn get_variable_type_name(variable: &VariableMeta<(), ()>) -> Option<String> {
     let module_name = get_current_module(&variable.var.path.strs).ok()?;
-    let bsv_modules = BSV_MODULES.lock().unwrap();
+    let bsv_modules = BSV_MODULES.read().unwrap();
     let module_data = bsv_modules.get(&module_name)?;
 
     let (instance_name, format) = parse_signal_name(variable.var.name.as_str());
@@ -195,4 +213,3 @@ pub fn get_variable_type_name(variable: &VariableMeta<(), ()>) -> Option<String>
         SignalNameFormat::Unknown => None,
     }
 }
-

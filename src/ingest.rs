@@ -18,22 +18,23 @@ use crate::helper::{
 // ... rest of ingest.rs functions ...
 // Now `RawBlockPort`, `TypeSegment`, `TypeStructure`, `TypeCategory`,
 // `RawBlockDefinition`, `ModuleData`, and the `BSV_` statics should resolve.
-use extism_pdk::{plugin_fn, FnResult, Json, Error, warn};
+use extism_pdk::{ warn};
 use serde::Deserialize;
 use std::collections::HashMap;
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
 use serde_json::Value; 
-use regex::Regex;
 
-pub use surfer_translation_types::plugin_types::TranslateParams;
-use surfer_translation_types::{
-    SubFieldTranslationResult, TranslationResult, ValueKind, VariableInfo,
-    VariableMeta, VariableValue, TranslationPreference, 
-    translator::{VariableNameInfo}, 
-    // Removed StructInfo and FieldInfo imports (E0432) as VariableInfo::Compound is expected.
-};
 
+// macro_rules! lock {
+//     ($mutex:expr) => {
+//         match $mutex.lock() {
+//             Ok(guard) => guard,
+//             Err(poisoned) => {
+//                 extism_pdk::warn!("Mutex poisoned, recovering: {:?}", poisoned);
+//                 poisoned.into_inner()
+//             }
+//         }
+//     };
+// }
 use extism_pdk::host_fn;
 #[host_fn]
 extern "ExtismHost" {
@@ -111,32 +112,24 @@ fn process_nested_segments(raw_segments: Vec<RawSegment>) -> Result<Vec<TypeSegm
         let var_name = seg.var_name.clone().unwrap_or_default();
         let parts: Vec<&str> = var_name.splitn(2, '.').collect();
         let top_name = parts[0].to_string();
-        
+
         if !top_level_names.contains(&top_name) {
             top_level_names.push(top_name.clone());
         }
 
         groups.entry(top_name).or_default().push(seg);
     }
-    
+
     let mut final_segments: Vec<TypeSegment> = Vec::new();
 
     for top_name in top_level_names {
-        if let Some(mut group) = groups.remove(&top_name) {
-            
+        if let Some( group) = groups.remove(&top_name) {
+
             let is_nested = group.iter().any(|s| s.var_name.as_ref().map_or(false, |n| n.contains('.')));
 
             if is_nested {
-                // Nested segments. Recurse after stripping the top_name prefix.
-                let mut min_abs = std::isize::MAX;
-                let mut max_abs = 0;
-                let mut total_width = 0;
-                
+                // --- NESTED CASE: Recurse and create compound segment ---
                 let remaining_segments: Vec<RawSegment> = group.into_iter().map(|mut seg| {
-                    if seg.min.abs() < min_abs { min_abs = seg.min.abs(); }
-                    if seg.max.abs() > max_abs { max_abs = seg.max.abs(); }
-                    total_width += seg.width;
-                    
                     if let Some(name) = seg.var_name.as_mut() {
                         if let Some(dot_index) = name.find('.') {
                             *name = name[(dot_index + 1)..].to_string();
@@ -146,28 +139,29 @@ fn process_nested_segments(raw_segments: Vec<RawSegment>) -> Result<Vec<TypeSegm
                 }).collect();
 
                 let inner_segments = process_nested_segments(remaining_segments)?;
-                
-                // Calculate the max_abs and min_abs of the unflattened structure
-                let max_abs = inner_segments.iter().map(|s| s.msb).max().unwrap_or(0);
-                let min_abs = inner_segments.iter().map(|s| s.lsb).min().unwrap_or(0);
+
+                // Calculate bounds from ACTUAL inner segments
+                let inner_max_msb = inner_segments.iter().map(|s| s.msb).max().unwrap_or(0);
+                let inner_min_lsb = inner_segments.iter().map(|s| s.lsb).min().unwrap_or(0);
+                let inner_total_width = inner_max_msb.saturating_add(1);
 
                 let inner_structure = TypeStructure {
-                    total_width,
+                    total_width: inner_total_width,
                     segments: inner_segments,
+                    enum_definition: None,
                 };
 
                 final_segments.push(TypeSegment {
                     name: Some(top_name),
-                    msb: max_abs,
-                    lsb: min_abs,
-                    type_name: "Compound".to_string(), // Placeholder name for nested structs
+                    msb: inner_max_msb,
+                    lsb: inner_min_lsb,
+                    type_name: "Compound".to_string(),
                     nested_structure: Some(Box::new(inner_structure)),
                 });
 
             } else {
-                // Simple leaf segment
-                if group.len() == 1 {
-                    let seg = group.remove(0);
+                // --- LEAF CASE: Process ALL segments, not just the first ---
+                for seg in group {
                     final_segments.push(TypeSegment {
                         name: seg.var_name,
                         msb: seg.max.abs() as usize,
@@ -175,62 +169,84 @@ fn process_nested_segments(raw_segments: Vec<RawSegment>) -> Result<Vec<TypeSegm
                         type_name: seg.type_name,
                         nested_structure: None,
                     });
-                } 
+                }
             }
         }
     }
-    
+
     Ok(final_segments)
 }
 
+// src/ingest.rs (Corrected process_typedef)
+
 fn process_typedef(type_name: &str, raw_value_ref: Value, bsv_typedefs: &mut HashMap<String, TypeStructure>, bsv_lookup: &mut HashMap<String, TypeCategory>) -> Result<(), Box<dyn std::error::Error>> {
-    
-    // Attempt to parse as Struct Segments
+
+    if type_name.starts_with("Bit#(") || type_name == "Bool" || type_name == "Clock" || type_name == "Reset" {
+        warn!("INGEST: Explicitly marking primitive type '{}' as Bits.", type_name);
+        bsv_lookup.insert(type_name.to_string(), TypeCategory::Bits);
+        return Ok(());
+    }
     if let Ok(raw_segments) = serde_json::from_value::<Vec<RawSegment>>(raw_value_ref.clone()) {
         if !raw_segments.is_empty() {
             let segments = process_nested_segments(raw_segments)?;
-            
             let total_width = segments.iter().map(|s| s.msb).max().unwrap_or(0).saturating_add(1);
-            
-            bsv_typedefs.insert(type_name.to_string(), TypeStructure { total_width, segments });
+
+            if segments.is_empty() {
+                return Err(format!("No valid segments for typedef {}", type_name).into());
+            }
+
+            // NOTE: The TypeStructure constructor here should be updated to include
+            // `enum_definition: None` since this is a Struct/Compound type.
+            bsv_typedefs.insert(type_name.to_string(), TypeStructure {
+                total_width,
+                segments,
+                enum_definition: None // Assumes the new field is present
+            });
+
             bsv_lookup.insert(type_name.to_string(), TypeCategory::Struct);
             return Ok(());
         }
-    } 
-    
+    }
+
+
     // Attempt to parse as Enum Members
     if let Ok(raw_members) = serde_json::from_value::<Vec<RawEnumMember>>(raw_value_ref.clone()) {
         if !raw_members.is_empty() {
-            // For enums, we treat them as Bit types in BSV_TYPEDEFS for lookup stability
-            // but rely on BSV_LOOKUP for actual translation logic.
             let max_val = raw_members.iter().map(|m| m.tag).max().unwrap_or(0);
-            let total_width = if max_val > 0 { 
-                (max_val as f64).log2().ceil() as usize 
-            } else { 
-                0 
+            let total_width = if max_val > 0 {
+                (max_val as f64).log2().ceil() as usize
+            } else {
+                1 // Minimum width is 1 bit
             };
 
-            // Put a placeholder structure for the Enum in TYPEDEFS to store its width and members
             let mut enum_members = HashMap::new();
             for member in raw_members {
                 enum_members.insert(member.tag, member.name);
             }
 
-            // Storing the members in the TypeStructure's segments (type_name field) for retrieval
-            bsv_typedefs.insert(type_name.to_string(), TypeStructure { 
-                total_width, 
-                segments: vec![TypeSegment {
-                    name: None, msb: 0, lsb: 0, 
-                    type_name: serde_json::to_string(&enum_members).unwrap_or_default(), 
-                    nested_structure: None 
-                }] 
+            // 🌟 FIX: Create the single segment for the enum
+            let segment = TypeSegment {
+                name: None,
+                msb: total_width.saturating_sub(1), // Correct MSB (width - 1)
+                lsb: 0,
+                // 🌟 FIX: Store the canonical type name here.
+                type_name: type_name.to_string(),
+                nested_structure: None
+            };
+
+            // 🌟 FIX: Store the TypeStructure with the enum definition members correctly
+            // placed in the dedicated `enum_definition` field.
+            bsv_typedefs.insert(type_name.to_string(), TypeStructure {
+                total_width,
+                segments: vec![segment],
+                enum_definition: Some(crate::helper::EnumDefinition { members: enum_members }), // Use new field
             });
-            
+
             bsv_lookup.insert(type_name.to_string(), TypeCategory::Enum);
             return Ok(());
         }
-    } 
-    
+    }
+
     // Default or empty definition is Bits/other simple type
     if type_name.starts_with("Bit#") || type_name == "Bool" || raw_value_ref.is_array() && raw_value_ref.as_array().unwrap().is_empty() {
         bsv_lookup.insert(type_name.to_string(), TypeCategory::Bits);
@@ -284,14 +300,26 @@ pub fn initialize_static_data() -> Result<(), Box<dyn std::error::Error>> {
         
         bsv_modules_map.insert(module_name, ModuleData { blocks: module_blocks });
     }
+    warn!("bsv_typedefs {:?}",bsv_typedefs);
+    warn!("bsv_lookup {:?}",bsv_lookup);
+    warn!("bsv_modules {:?}",bsv_modules_map);
     
     // --- Assign Static Globals ---
-    *BSV_TYPEDEFS.lock().unwrap() = bsv_typedefs; 
-    *BSV_LOOKUP.lock().unwrap() = bsv_lookup;
-    *BSV_MODULES.lock().unwrap() = bsv_modules_map;
+//   *BSV_TYPEDEFS.lock().unwrap() = bsv_typedefs; 
+//   *BSV_LOOKUP.lock().unwrap() = bsv_lookup;
+//   *BSV_MODULES.lock().unwrap() = bsv_modules_map;
     
+    // In src/ingest.rs (replace the assignment block at the end of the file)
+
+    // --- Assign Static Globals (Safe version) ---
+    let mut type_g= BSV_TYPEDEFS.write().unwrap() ;
+    *type_g = bsv_typedefs;
+    let mut lookup_g=BSV_LOOKUP.write().unwrap();
+    *lookup_g = bsv_lookup;
+    let mut mod_g = BSV_MODULES.write().unwrap();
+    *mod_g = bsv_modules_map;
     // --- Process Maps ---
-    let mut maps_guard = BSV_MAPS.lock().unwrap();
+    let mut maps_guard = BSV_MAPS.write().unwrap();
     *maps_guard = map_content.maps.into_iter().map(|(k, ModuleMapping(v))| (k, v)).collect();
 
     Ok(())

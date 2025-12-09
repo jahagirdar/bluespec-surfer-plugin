@@ -1,4 +1,5 @@
 import FIFO::*;
+import StmtFSM::*;
 typedef enum{
 	Red=1,
 	Blue=20,
@@ -7,8 +8,13 @@ typedef enum{
 } Colors_e deriving(Bits, Eq, FShow);
 typedef struct{
 	Colors_e rgb;
-	Bit#(21) b;
+	Bit#(8) b;
 } Foo_st deriving(Bits, Eq, FShow);
+typedef struct {
+	Bit#(50) fifty;
+	Bit#(99) nn;
+}BitLarge deriving(Bits, Eq, FShow);
+
 typedef struct {
 	Foo_st f;
 	Bit#(10)a;
@@ -44,8 +50,21 @@ endmodule
 (*synthesize*)
 module mkTop(Empty);
 	Reg#(Foo_st) rb <-mkRegA(unpack(0));
+	Reg#(BitLarge) llarge <-mkRegA(unpack(0));
 	Ifc_a aa <-mkB();
 	Ifc_a ab <-mkB();
 	Ifc_a ac <-mkA();
+	let s=seq
+		rb<= Foo_st{rgb:Blue,b:'hab};
+		rb<= Foo_st{rgb:Red,b:'h55};
+		rb<= Foo_st{rgb:Black,b:'hff};
+		rb<= Foo_st{rgb:Green,b:'h00};
+		$display("End of simulation");
+		$finish();
+		endseq;
+		FSM fsm <-mkFSM(s);
+		rule start;
+			fsm.start();
+			endrule
 
 endmodule

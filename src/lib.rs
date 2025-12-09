@@ -2,17 +2,11 @@
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
 
-use extism_pdk::{plugin_fn, FnResult, Json, Error, warn};
-use serde::Deserialize;
-use std::collections::HashMap;
-use once_cell::sync::Lazy;
-use std::sync::Mutex;
-use serde_json::Value; 
-use regex::Regex;
+use extism_pdk::{plugin_fn, FnResult, Json, Error, warn };
 
 pub use surfer_translation_types::plugin_types::TranslateParams;
 use surfer_translation_types::{
-    SubFieldTranslationResult, TranslationResult, ValueKind, VariableInfo,
+     TranslationResult,  VariableInfo,
     VariableMeta, VariableValue, TranslationPreference, 
     translator::{VariableNameInfo}, 
     // Removed StructInfo and FieldInfo imports (E0432) as VariableInfo::Compound is expected.
@@ -34,8 +28,7 @@ pub use translators::*;
 
 // You may need to explicitly import the functions you need from the new files
 // E.g., for use in the translate/variable_info plugin_fns:
-use helper::{get_variable_type_name};
-use translators::{get_struct_fields_info, translate_enum, translate_recursive};
+// use helper::{get_variable_type_name};
 
 // --- Host Functions ---
 
@@ -53,7 +46,9 @@ extern "ExtismHost" {
 // -------------------------------------------------------------------------
 
 #[plugin_fn]
-pub fn name() -> FnResult<String> { Ok("Bluespec Translator".to_string()) }
+pub fn name() -> FnResult<String> {
+    Ok("Bluespec Translator".to_string())
+}
 
 #[plugin_fn]
 pub fn new() -> FnResult<()> {
@@ -62,79 +57,106 @@ pub fn new() -> FnResult<()> {
 
 #[plugin_fn]
 pub fn translates(variable: VariableMeta<(), ()>) -> FnResult<TranslationPreference> {
-    warn!("translates");
-    // Optimization: Only translate if we can resolve a block and type.
-    if get_variable_type_name(&variable).is_some() {
-        return Ok(TranslationPreference::Prefer);
+    // 1. Get the type name
+    let type_name = match get_variable_type_name(&variable) {
+        Some(name) => name,
+        None => return Ok(TranslationPreference::No), // Can't resolve type name, so skip
+    };
+
+    // 2. Get the type category from the pre-loaded map (BSV_LOOKUP)
+    let bsv_lookup_guard = BSV_LOOKUP.read().unwrap();
+    let category = bsv_lookup_guard.get(&type_name);
+
+    // 3. Dispatch based on category
+    warn!("Translates: Category = {:?}",category);
+    match category {
+        // Types that require structural modification or symbol lookups:
+        Some(TypeCategory::Struct) | Some(TypeCategory::Union) |
+        Some(TypeCategory::Interface) | Some(TypeCategory::Enum) => {
+            // We want to transform these complex types.
+            Ok(TranslationPreference::Prefer)
+        },
+
+        // Primitives: The debugger's default display is often sufficient (raw bits),
+        // and we want to avoid the extra function call overhead.
+        Some(TypeCategory::Bits) | Some(TypeCategory::Bool) => {
+            Ok(TranslationPreference::No)
+        },
+
+        // Unknown or unsupported types
+        _ => {
+            Ok(TranslationPreference::No)
+        }
     }
-    Ok(TranslationPreference::No)
+    //Ok(translate)
 }
+
+
+
+
+#[plugin_fn]
+// =========================================================================
+// lib.rs: translate (Fixed for Slice Indexing Panic)
+// =========================================================================
+
 
 #[plugin_fn]
 pub fn translate(params: Json<TranslateParams>) -> FnResult<TranslationResult> {
-    warn!("translate");
     let variable = &params.0.variable;
     let value = &params.0.value;
-    
-    // 1. Determine the Type Name using the complex resolution logic
+    warn!("translate: {:?} \n value={:?}", variable, value);
+
+    // 1. Get type metadata (clone out of mutex)
     let type_name = get_variable_type_name(variable)
         .ok_or_else(|| Error::msg(format!("Failed to determine type for variable: {}", variable.var.name)))?;
 
-    // 2. Resolve Type Category
-    let lookup_guard = BSV_LOOKUP.lock().unwrap();
-    let type_category = lookup_guard.get(&type_name).unwrap_or(&TypeCategory::Bits);
-    
-    let digits_str = match value {
+    let struct_def = {
+        let typedefs_guard = BSV_TYPEDEFS.read().unwrap();
+        typedefs_guard.get(&type_name).cloned()
+            .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?
+    };
+
+    // 2. Get VCD width and data
+    let vcd_width = variable.num_bits.unwrap_or(0) as usize;
+    let digits_str_unpadded = match value {
         VariableValue::BigUint(b) => format!("{:b}", b),
         VariableValue::String(s) => s.clone(),
+    //   _ => return Ok(create_no_translation_result()),
     };
-    
-    let width = variable.num_bits.unwrap_or(digits_str.len() as u32) as usize;
-    let padding = width.saturating_sub(digits_str.len());
-    let padded_digits: String = std::iter::repeat('0').take(padding).chain(digits_str.chars()).collect();
-    let digits_vec: Vec<char> = padded_digits.chars().collect();
-    warn!("translate variables set");
-    
-    // 3. Dispatch to Translator based on Category
-    match type_category {
-        TypeCategory::Struct => {
-            let typedefs_guard = BSV_TYPEDEFS.lock().unwrap();
-            
-            let struct_def = typedefs_guard.get(&type_name)
-                .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
-            
-            warn!("translate: width={}, digits_len={}, struct_segments={}",
-      width, digits_vec.len(), struct_def.segments.len());
-warn!("translate: struct_total_width={}", struct_def.total_width);  // This will show the invalid value
-    warn!("translate translate_recursive called");
-    let tr=translate_recursive(struct_def, width, &digits_vec);
-    warn!("translate translate_recursive Done");
-            Ok(tr)
-        }
-        TypeCategory::Enum => {
-    warn!("translate enum called");
-            Ok(translate_enum(&type_name, width, &padded_digits))
-        }
-        _ => {
-            // Default to Bits (handles Bits and other unrecognized types)
-            Ok(TranslationResult {
-                val: surfer_translation_types::ValueRepr::Bits(width as u64, padded_digits),
-                subfields: vec![],
-                kind: ValueKind::Normal,
-            })
-        }
+
+    // 3. 🌟 CRITICAL: Pad to TYPE width, NOT VCD width
+    let type_width = struct_def.total_width; // Use the type's actual width
+    let padding = type_width.saturating_sub(digits_str_unpadded.len());
+    let digits_str: String = std::iter::repeat('0')
+        .take(padding)
+        .chain(digits_str_unpadded.chars())
+        .collect();
+    let digits_vec: Vec<char> = digits_str.chars().collect();
+
+    // 4. Validate width match
+    if vcd_width != type_width {
+        warn!("Width mismatch: VCD={} bits, Type={} bits. Using type width.", vcd_width, type_width);
     }
+
+    // 5. Call translator with CORRECT width
+    warn!("Calling TranslateRecursive with {:?} {:?} {:?}",struct_def,type_width,digits_vec);
+    let tr = translate_recursive(&struct_def, type_width, &digits_vec);
+    warn!("translate return value {:?}",tr);
+    Ok(tr)
 }
 
 // *** CORRECTLY IMPLEMENTED variable_info ***
 #[plugin_fn]
+// In src/lib.rs (inside variable_info)
+
+#[plugin_fn]
 pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
     
-    warn!("variable_info");
     let type_name = get_variable_type_name(&variable)
         .ok_or_else(|| Error::msg(format!("Failed to determine type for variable: {}", variable.var.name)))?;
 
-    let bsv_lookup = BSV_LOOKUP.lock().unwrap();
+    let bsv_lookup=BSV_LOOKUP.read().unwrap();
+
     let type_category = bsv_lookup.get(&type_name).unwrap_or(&TypeCategory::Bits);
     
     match type_category {
@@ -142,7 +164,7 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
         TypeCategory::Enum => Ok(VariableInfo::String), 
         
         TypeCategory::Struct => {
-            let bsv_typedefs = BSV_TYPEDEFS.lock().unwrap();
+            let bsv_typedefs = BSV_TYPEDEFS.read().unwrap() ;
             
             let struct_def = bsv_typedefs.get(&type_name)
                 .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
@@ -156,7 +178,6 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
 
 #[plugin_fn]
 pub fn variable_name_info(_variable: Json<VariableMeta<(), ()>>) -> FnResult<Option<VariableNameInfo>> {
-    warn!("variable_name_info");
     Ok(None)
 }
 
