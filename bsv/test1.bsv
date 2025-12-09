@@ -1,3 +1,5 @@
+import FIFO::*;
+import StmtFSM::*;
 typedef enum{
 	Red=1,
 	Blue=20,
@@ -5,9 +7,14 @@ typedef enum{
 	Black=40 
 } Colors_e deriving(Bits, Eq, FShow);
 typedef struct{
-	Colors_e c;
-	Bit#(21) b;
+	Colors_e rgb;
+	Bit#(8) b;
 } Foo_st deriving(Bits, Eq, FShow);
+typedef struct {
+	Bit#(50) fifty;
+	Bit#(99) nn;
+}BitLarge deriving(Bits, Eq, FShow);
+
 typedef struct {
 	Foo_st f;
 	Bit#(10)a;
@@ -15,26 +22,27 @@ typedef struct {
 } Bar_st deriving(Bits, Eq, FShow);
 
 interface Ifc_a;
-	method Action a(Bit#(32) x, Bar_st b);
-		method Foo_st c;
+	method Action in(Bit#(32) x, Bar_st b);
+		method Foo_st out;
 endinterface
 
 (*synthesize*)
 module mkA(Ifc_a);
 	Reg#(Bar_st) rb <-mkRegA(unpack(0));
-	method Action a(Bit#(32) x, Bar_st b);
+	method Action in(Bit#(32) x, Bar_st b);
 		endmethod
-		method Foo_st c;
+		method Foo_st out;
 			return unpack(0);
 		endmethod
 
 endmodule
 module mkB(Ifc_a);
-	Reg#(Bar_st) braax <-mkRegA(unpack(0));
+	Reg#(Bar_st) bar_ax <-mkRegA(unpack(0));
 	Ifc_a inst_a <- mkA();
-	method Action a(Bit#(32) x, Bar_st b);
+	FIFO#(Foo_st) ff <-mkFIFO();
+	method Action in(Bit#(32) x, Bar_st b);
 		endmethod
-		method Foo_st c;
+		method Foo_st out;
 			return unpack(0);
 		endmethod
 
@@ -42,8 +50,21 @@ endmodule
 (*synthesize*)
 module mkTop(Empty);
 	Reg#(Foo_st) rb <-mkRegA(unpack(0));
+	Reg#(BitLarge) llarge <-mkRegA(unpack(0));
 	Ifc_a aa <-mkB();
 	Ifc_a ab <-mkB();
 	Ifc_a ac <-mkA();
+	let s=seq
+		rb<= Foo_st{rgb:Blue,b:'hab};
+		rb<= Foo_st{rgb:Red,b:'h55};
+		rb<= Foo_st{rgb:Black,b:'hff};
+		rb<= Foo_st{rgb:Green,b:'h00};
+		$display("End of simulation");
+		$finish();
+		endseq;
+		FSM fsm <-mkFSM(s);
+		rule start;
+			fsm.start();
+			endrule
 
 endmodule
