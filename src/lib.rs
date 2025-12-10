@@ -2,7 +2,7 @@
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
 
-use extism_pdk::{plugin_fn, FnResult, Json, Error, debug };
+use extism_pdk::{plugin_fn, FnResult, Json, Error, debug,warn };
 
 pub use surfer_translation_types::plugin_types::TranslateParams;
 use surfer_translation_types::{
@@ -169,9 +169,19 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
             let struct_def = bsv_typedefs.get(&type_name)
                 .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
             
+            let field_info=get_struct_fields_info(struct_def, &bsv_lookup, &bsv_typedefs);
+            warn!("Field Info = {:?}", field_info);
             // Call the recursive helper function
-            Ok(get_struct_fields_info(struct_def, &bsv_lookup, &bsv_typedefs))
+            Ok(field_info)
         }
+        TypeCategory::Bits => { if variable.num_bits == 1.into() {
+            warn!("Decoding to Bool");
+            Ok(VariableInfo::Bool)}
+            else {
+            warn!("Decoding to Bits");
+                Ok(VariableInfo::Bits)}
+        }
+
         _ => Ok(VariableInfo::Bits),
     }
 }

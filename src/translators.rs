@@ -2,7 +2,7 @@
 // src/translators.rs (Revised)
 // =========================================================================
 
-use extism_pdk::{debug};
+use extism_pdk::{debug,warn};
 use std::collections::HashMap; // <--- ADDED
 
 // Import necessary types from external crate
@@ -40,16 +40,21 @@ pub fn get_struct_fields_info(
             get_struct_fields_info(nested_structure, bsv_lookup, bsv_typedefs)
         } else {
             // Simple type or a non-nested struct/enum
+            warn!("Segment = {:?}", segment);
             match bsv_lookup.get(&segment.type_name).unwrap_or(&TypeCategory::Bits) {
                 TypeCategory::Struct => {
                     if let Some(struct_def) = bsv_typedefs.get(&segment.type_name) {
                         get_struct_fields_info(struct_def, bsv_lookup, bsv_typedefs)
-                    } else {
+                    } else if segment.msb == segment.lsb{
+                        VariableInfo::Bool
+                    }
+                    else {
                         VariableInfo::Bits
                     }
                 }
                 // Use String for Enums since the VariableInfo definition lacks Enum
                 TypeCategory::Enum => VariableInfo::String,
+                TypeCategory::Bits => varinfo_bits_or_bool(segment),
                 _ => VariableInfo::Bits, // Default: Bit#(N) or unhandled simple type
             }
         };
@@ -58,6 +63,15 @@ pub fn get_struct_fields_info(
     }).collect();
 
     VariableInfo::Compound { subfields }
+}
+fn varinfo_bits_or_bool(segment: &TypeSegment ) -> VariableInfo {
+
+                    if segment.msb == segment.lsb{
+                        VariableInfo::Bool
+                    }
+                    else {
+                        VariableInfo::Bits
+                    }
 }
 
 
@@ -178,7 +192,8 @@ pub fn translate_data_by_category(
 
                 TranslationResult {
                     // Use ValueRepr::Bit(char) for single bits
-                    val: ValueRepr::Bit(bit_char),
+                    // val: ValueRepr::Bit(bit_char),
+                    val: ValueRepr::Bit('1'),
                     subfields: vec![],
                     kind: ValueKind::Normal,
                 }
