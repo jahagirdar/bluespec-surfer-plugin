@@ -120,7 +120,7 @@ pub fn create_no_translation_result() -> TranslationResult {
 
 // --- Constants for Port Priority ---
 const IGNORED_PORTS: [&str; 8] = ["CLK", "RST", "EN", "CLR","FULL_N","EMPTY_N","ENQ","DEQ"];
-const PREFERRED_PORTS: [&str; 4] = ["Q_OUT","D_OUT", "Probe", "D_IN"];
+const PREFERRED_PORTS: [&str; 5] = ["Q_OUT","D_OUT", "Probe", "D_IN","WGET"];
 
 #[derive(Debug)]
 enum SignalNameFormat {

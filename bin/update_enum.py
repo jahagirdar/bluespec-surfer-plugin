@@ -1,13 +1,110 @@
 import json
-import re
+import re 
 import sys
 from collections import defaultdict
+from pyparsing import (
+    Word,
+    Literal,
+    Suppress,
+    alphas,
+    alphanums,
+    Group,
+    Optional,
+    Char,
+    delimitedList,
+    ZeroOrMore
+)
 
 # --- Configuration ---
 LOG_FILE = "dsyminitial.log"
 JSON_FILE = "bluespec.json"
-# TARGET_MODULE is intentionally removed as we now iterate over all modules
 # ---------------------
+
+# --- Pyparsing Grammar Definitions ---
+
+# Shared Tokens
+identifier = Word(alphas, alphanums + "_" + ".")
+integer = Word("0123456789")
+
+open_paren = Suppress(Literal("("))
+close_paren = Suppress(Literal(")"))
+open_bracket = Suppress(Literal("["))
+close_bracket = Suppress(Literal("]"))
+comma = Suppress(Literal(","))
+star = Literal("*")
+pound = Literal("#")
+
+# 1. TIdata (enum) Grammar for Type Identification (Pass 1)
+# -----------------------------------------------------------
+type_char = Char("$#*")
+type_arrow = Suppress(Literal("->"))
+type_arg = identifier | type_char | type_arrow | star | pound
+complex_type_signature = open_paren + ZeroOrMore(type_arg) + close_paren
+type_info_content = (star | complex_type_signature | identifier)
+
+alu_op_list = Group(delimitedList(identifier))
+tidata_enum_structure = (
+    Suppress(Literal("TIdata"))
+    + open_paren
+    + Suppress(Literal("enum"))
+    + close_paren
+    + open_bracket
+    + alu_op_list
+    + close_bracket
+)
+
+ti_data_structure = (
+    open_paren
+    + identifier("type_name")
+    + comma
+    + Suppress(Literal("TypeInfo"))
+    + type_info_content * (1, 3)
+    + open_paren
+    + tidata_enum_structure
+    + close_paren
+    + Optional(comma)
+    + close_paren
+)
+
+# 2. ConInfo Grammar for Tag Extraction (Pass 2)
+# -----------------------------------------------
+colon_greater_colon = Suppress(Literal(":>:"))
+arrow = Suppress(Literal("->"))
+colon_colon = Suppress(Literal("::"))
+equal_sign = Suppress(Literal("="))
+
+op_mapping = (
+    identifier("op_symbol") 
+    + colon_greater_colon
+    + open_paren + Suppress(Optional(identifier)) + close_paren
+    + arrow
+    + identifier("type_name_check")
+)
+
+tag_info = (
+    integer + Suppress(Literal("of")) + integer
+    + comma
+    + Suppress(Literal("tag")) + equal_sign
+    + integer("tag_value")
+    + colon_colon
+    + Suppress(Literal("Bit")) + integer
+)
+
+coninfo_structure = (
+    open_bracket
+    + Suppress(Literal("ConInfo"))
+    + identifier("enum_type_name")
+    + open_paren + Suppress(Literal("visible")) + close_paren
+    + open_paren
+    + op_mapping
+    + close_paren
+    + open_paren
+    + tag_info
+    + close_paren
+    + close_bracket
+)
+
+# --- Core Functions ---
 
 def load_log_content(log_filepath):
     """Loads and returns the content of the log file."""
@@ -20,69 +117,47 @@ def load_log_content(log_filepath):
 
 def identify_enum_types(log_content):
     """
-    Pass 1: Identifies all enum type names using the 'TIdata (enum)' pattern.
+    Pass 1: Identifies all enum type names using the TIdata (enum) pyparsing grammar.
     Returns a set of fully qualified enum names (e.g., 'test1.Colors_e').
     """
     print("🔍 Pass 1: Identifying enum type names...")
     
-    # Pattern looks for: (test1.Colors_e, TypeInfo * (TIdata (enum) [Red, Blue, Green, Black]))
-    enum_type_pattern = re.compile(
-        r'\(([\w.]+),\s+TypeInfo\s+.*?\s+\(TIdata\s+\(enum\).*?\)'
-    )
-    
     enum_types = set()
-    for match in enum_type_pattern.finditer(log_content):
-        type_name = match.group(1).strip()
-        enum_types.add(type_name)
+    
+    for tokens, _, _ in ti_data_structure.scanString(log_content):
+        enum_types.add(tokens["type_name"])
     
     print(f"✅ Found {len(enum_types)} potential enum type(s).")
     return enum_types
 
-def extract_enum_members_and_tags(log_content, enum_types):
+def extract_enum_members_and_tags(log_content, confirmed_enum_types_dot):
     """
-    Pass 2: Extracts member names and tag values for the identified enum types.
+    Pass 2: Extracts member names and tag values using the ConInfo pyparsing grammar.
     Returns a dict: { 'test1::Colors_e': [{'name': 'Red', 'value': 1}, ...] }
     """
     print("\n🔍 Pass 2: Extracting member tags and formatting...")
     
-    # Raw data storage: { 'test1.Colors_e': { 'Red': 1, 'Blue': 20, ... } }
     raw_enums = defaultdict(dict)
     
-    # Pattern finds: [ConInfo test1.Colors_e (visible) (test1.Red :>: ... tag = 1 :: Bit 6)]
-    # Group 1: Full enum type name (e.g., 'test1.Colors_e').
-    # Group 2: Symbolic member name (e.g., 'Red' or 'test1.Red').
-    # Group 3: Integer tag value (e.g., '1').
-    member_tag_pattern = re.compile(
-        r'ConInfo\s+([\w.:]+)\s+.*?\((?:[\w.]+\.)?([\w.]+)\s*:>.*?\)\s*\(.*?\s*tag\s*=\s*(\d+)\s*::\s*Bit\s*(\d+)\)\s*\]',
-        re.DOTALL
-    )
-
-    for match in member_tag_pattern.finditer(log_content):
-        enum_type_name_dot = match.group(1).strip() # e.g., 'test1.Colors_e'
+    for tokens, _, _ in coninfo_structure.scanString(log_content):
+        enum_type_name_dot = tokens["enum_type_name"]
         
-        # Only process if this type was confirmed as an enum in Pass 1
-        if enum_type_name_dot in enum_types:
-            member_symbol = match.group(2).strip()
-            tag_value = int(match.group(3))
+        if enum_type_name_dot in confirmed_enum_types_dot:
+            member_symbol = tokens["op_symbol"]
+            tag_value = int(tokens["tag_value"])
             
-            # Use the simple name (e.g., 'Red') for the JSON 'name' field
             display_name = member_symbol.split('.')[-1]
-            
-            # Store raw data
             raw_enums[enum_type_name_dot][display_name] = tag_value
     
-    # Convert raw data to the final JSON structure and use '::' separator in keys
     final_enum_data = {}
     for enum_type_name_dot, members in raw_enums.items():
         json_list = []
-        # Sort by value for clean JSON output
         for name, value in sorted(members.items(), key=lambda item: item[1]):
             json_list.append({
                 "name": name,
                 "value": value
             })
         
-        # Convert 'test1.Colors_e' to 'test1::Colors_e' for the JSON key
         json_key = enum_type_name_dot.replace('.', '::')
         final_enum_data[json_key] = json_list
         
@@ -97,19 +172,13 @@ def get_used_types_in_module(module_data):
     
     if "typedefs" in module_data:
         for type_name, definition in module_data["typedefs"].items():
-            # If the definition is a list of dictionaries, assume it's a struct definition
-            # (or already an enum, which we handle below).
             if isinstance(definition, list) and all(isinstance(item, dict) for item in definition):
-                if not definition or 'var' in definition[0]: # Heuristic check for struct fields
-                    # This is a struct definition; collect the types of its fields.
+                if not definition or 'var' in definition[0]:
                     for segment in definition:
                         if 'type' in segment and segment['type']:
                             used_types.add(segment['type'])
-            # If the type_name is already an enum key, we still add it to the set 
-            # to prevent re-inserting it in the update step.
             used_types.add(type_name)
     
-    # Check blocks (Port types)
     if "blocks" in module_data:
         for block_info in module_data["blocks"].values():
             if "ports" in block_info:
@@ -119,11 +188,26 @@ def get_used_types_in_module(module_data):
                         
     return used_types
 
+def handle_union(hsh):
+    for module in hsh:
+        print(module,type(hsh[module]))
+        if isinstance(hsh[module],str):
+             continue
+        print(hsh[module].keys())
+        if 'typedefs' in hsh[module]:
+            print("has typedefs")
+            for ty,val in hsh[module]["typedefs"].items():
+                for v in val:
+                    if 'type' in v:
+                        if ty == v['type']:
+                            print(f"fixing {ty} {v}")
+                            v['type']=f'Bit#({v["width"]})'
 def update_bluespec_json(json_filepath, all_enum_json_data):
     """
-    Loads bluespec.json, determines which modules use which enums, and inserts them.
+    Loads bluespec.json, determines which modules use which enums, and 
+    INSERTS OR OVERWRITES them with the correct definitions (guaranteed replacement).
     """
-    print(f"\n💾 Updating {json_filepath} based on module usage...")
+    print(f"\n💾 Updating {json_filepath} based on module usage (and ensuring replacement)...")
     
     try:
         with open(json_filepath, 'r') as f:
@@ -132,29 +216,32 @@ def update_bluespec_json(json_filepath, all_enum_json_data):
         print(f"Error handling JSON file: {e}")
         sys.exit(1)
         
-    # Get all keys that look like module definitions (dicts with typedefs)
     modules_to_process = [k for k in data.keys() 
                           if isinstance(data[k], dict) and 'typedefs' in data[k]]
     
-    total_inserted_count = 0
+    total_inserted_or_replaced_count = 0
     
     for module_name in modules_to_process:
         module_data = data[module_name]
         used_types = get_used_types_in_module(module_data)
         
-        # Check which of the extracted enums are used in this module's types or blocks
         for enum_key, enum_definition in all_enum_json_data.items():
             if enum_key in used_types:
-                # If the enum is used and not already defined, insert it
-                if enum_key not in module_data["typedefs"]:
-                    module_data["typedefs"][enum_key] = enum_definition
-                    total_inserted_count += 1
-                    print(f"   Inserted '{enum_key}' into '{module_name}'.")
+                
+                action = "Inserted"
+                if enum_key in module_data["typedefs"]:
+                    # Key Change: Overwrite logic is implemented by the unconditional assignment below
+                    action = "Replaced (Was wrong)"
+                
+                # --- Unconditional Assignment (The key change) ---
+                module_data["typedefs"][enum_key] = enum_definition
+                total_inserted_or_replaced_count += 1
+                print(f"   {action} '{enum_key}' into '{module_name}'.")
     
-    if total_inserted_count == 0:
-         print("⚠️ No new enum definitions were inserted. All found enums were either already present or not referenced in the module usage.")
+    if total_inserted_or_replaced_count == 0:
+         print("⚠️ No new enum definitions were inserted or replaced. All found enums were either already correct or not referenced in the module usage.")
     
-    # Write the modified data back to the file
+    handle_union(data)
     with open(json_filepath, 'w') as f:
         json.dump(data, f, indent=4)
         print(f"\n✅ Changes saved to {json_filepath}.")
@@ -167,10 +254,9 @@ def main():
     confirmed_enum_types_dot = identify_enum_types(log_content)
     
     # 2. Extract members and tags, convert to JSON format (Pass 2)
-    # The result is { 'test1::Colors_e': [...] }
     all_enum_json_data = extract_enum_members_and_tags(log_content, confirmed_enum_types_dot)
     
-    # 3. Determine module usage and insert into bluespec.json
+    # 3. Determine module usage and insert/overwrite in bluespec.json
     update_bluespec_json(JSON_FILE, all_enum_json_data)
 
 if __name__ == "__main__":

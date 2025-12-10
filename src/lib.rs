@@ -52,6 +52,7 @@ pub fn name() -> FnResult<String> {
 
 #[plugin_fn]
 pub fn new() -> FnResult<()> {
+    extism_pdk::info!("Bluespec translator (Beta) https://github.com/jahagirdar/bluespec-surfer-plugin");
     initialize_static_data().map_err(|e| Error::msg(e.to_string()).into())
 }
 
@@ -158,6 +159,7 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
     let bsv_lookup=BSV_LOOKUP.read().unwrap();
 
     let type_category = bsv_lookup.get(&type_name).unwrap_or(&TypeCategory::Bits);
+    warn!("TypeCategoryC= {:?}",type_category);
     
     match type_category {
         // Mapped to String because the provided VariableInfo enum lacks an Enum variant.
@@ -168,17 +170,16 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
             
             let struct_def = bsv_typedefs.get(&type_name)
                 .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
+            warn!("struct_def= {:?}",struct_def);
             
             let field_info=get_struct_fields_info(struct_def, &bsv_lookup, &bsv_typedefs);
-            warn!("Field Info = {:?}", field_info);
             // Call the recursive helper function
+            warn!("field_info= {:?}",field_info);
             Ok(field_info)
         }
         TypeCategory::Bits => { if variable.num_bits == 1.into() {
-            warn!("Decoding to Bool");
             Ok(VariableInfo::Bool)}
             else {
-            warn!("Decoding to Bits");
                 Ok(VariableInfo::Bits)}
         }
 

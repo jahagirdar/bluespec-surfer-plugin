@@ -1,0 +1,17 @@
+*.bo
+*.ba
+*.h
+*.cxx
+*.v
+*.o
+*.orig
+*.swp
+target/*
+*.log
+*.so
+*.lock
+*.vcd
+*.fst
+*.tgz
+bsim
+err

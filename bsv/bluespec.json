@@ -39,39 +39,59 @@
                     "max": 7
                 }
             ],
-            "Clock": [],
+            "test1::Stage": [
+                {
+                    "name": "FETCH",
+                    "value": 0
+                },
+                {
+                    "name": "DECODE",
+                    "value": 1
+                },
+                {
+                    "name": "EXECUTE",
+                    "value": 2
+                },
+                {
+                    "name": "MEM",
+                    "value": 3
+                },
+                {
+                    "name": "WB",
+                    "value": 4
+                },
+                {
+                    "name": "HALT",
+                    "value": 5
+                }
+            ],
+            "Reset": [],
             "Bool": [
                 {
                     "var": "",
-                    "type": "Bool",
+                    "type": "Bit#(1)",
                     "width": 1,
                     "min": 0,
                     "max": 0
                 }
             ],
-            "Bit#(32)": [
+            "Clock": [],
+            "Maybe#(test1::OperandValue)": [
+                {
+                    "var": "",
+                    "type": "Maybe#(type a)",
+                    "width": 68,
+                    "min": 0,
+                    "max": 67
+                }
+            ],
+            "Bit#(4)": [
                 {
                     "var": "",
                     "type": "Bit#(numeric type a)",
-                    "width": 32,
+                    "width": 4,
                     "min": 0,
-                    "max": 31
-                }
-            ],
-            "test1::Foo_st": [
-                {
-                    "var": "rgb",
-                    "type": "test1::Colors_e",
-                    "width": 6,
-                    "min": 8,
-                    "max": 13
-                },
-                {
-                    "var": "b",
-                    "type": "Bit#(numeric type a)",
-                    "width": 8,
-                    "min": 0,
-                    "max": 7
+                    "max": 3
                 }
             ],
             "test1::BitLarge": [
@@ -90,14 +110,210 @@
                     "max": 98
                 }
             ],
-            "Reset": [],
-            "Bit#(4)": [
+            "test1::Foo_st": [
+                {
+                    "var": "rgb",
+                    "type": "test1::Colors_e",
+                    "width": 6,
+                    "min": 8,
+                    "max": 13
+                },
+                {
+                    "var": "b",
+                    "type": "Bit#(numeric type a)",
+                    "width": 8,
+                    "min": 0,
+                    "max": 7
+                }
+            ],
+            "Bit#(32)": [
                 {
                     "var": "",
                     "type": "Bit#(numeric type a)",
-                    "width": 4,
+                    "width": 32,
                     "min": 0,
-                    "max": 3
+                    "max": 31
+                }
+            ],
+            "Maybe#(test1::AluOp)": [
+                {
+                    "var": "",
+                    "type": "Maybe#(type a)",
+                    "width": 6,
+                    "min": 0,
+                    "max": 5
+                }
+            ],
+            "test1::OperandValue": [
+                {
+                    "var": "",
+                    "type": "Bit#(67)",
+                    "width": 67,
+                    "min": 0,
+                    "max": 66
+                }
+            ],
+            "test1::SuperPacket": [
+                {
+                    "var": "core_id",
+                    "type": "Bit#(numeric type a)",
+                    "width": 3,
+                    "min": 353,
+                    "max": 355
+                },
+                {
+                    "var": "current_stage",
+                    "type": "test1::Stage",
+                    "width": 3,
+                    "min": 350,
+                    "max": 352
+                },
+                {
+                    "var": "alu_op",
+                    "type": "test1::AluOp",
+                    "width": 5,
+                    "min": 345,
+                    "max": 349
+                },
+                {
+                    "var": "gpr_read_ports[2]",
+                    "type": "Bit#(numeric type a)",
+                    "width": 5,
+                    "min": 340,
+                    "max": 344
+                },
+                {
+                    "var": "gpr_read_ports[1]",
+                    "type": "Bit#(numeric type a)",
+                    "width": 5,
+                    "min": 335,
+                    "max": 339
+                },
+                {
+                    "var": "gpr_read_ports[0]",
+                    "type": "Bit#(numeric type a)",
+                    "width": 5,
+                    "min": 330,
+                    "max": 334
+                },
+                {
+                    "var": "branch_target",
+                    "type": "Maybe#(type a)",
+                    "width": 65,
+                    "min": 265,
+                    "max": 329
+                },
+                {
+                    "var": "operand_a",
+                    "type": "test1::OperandValue",
+                    "width": 67,
+                    "min": 198,
+                    "max": 264
+                },
+                {
+                    "var": "operand_b",
+                    "type": "test1::OperandValue",
+                    "width": 67,
+                    "min": 131,
+                    "max": 197
+                },
+                {
+                    "var": "commit_action",
+                    "type": "test1::CommitAction",
+                    "width": 131,
+                    "min": 0,
+                    "max": 130
+                }
+            ],
+            "test1::CommitAction": [
+                {
+                    "var": "",
+                    "type": "Bit#(131)",
+                    "width": 131,
+                    "min": 0,
+                    "max": 130
+                }
+            ],
+            "test1::AluOp": [
+                {
+                    "name": "ADD",
+                    "value": 0
+                },
+                {
+                    "name": "SUB",
+                    "value": 1
+                },
+                {
+                    "name": "AND",
+                    "value": 2
+                },
+                {
+                    "name": "OR",
+                    "value": 3
+                },
+                {
+                    "name": "XOR",
+                    "value": 4
+                },
+                {
+                    "name": "SLL",
+                    "value": 5
+                },
+                {
+                    "name": "SRL",
+                    "value": 6
+                },
+                {
+                    "name": "SRA",
+                    "value": 7
+                },
+                {
+                    "name": "BEQ",
+                    "value": 8
+                },
+                {
+                    "name": "BNE",
+                    "value": 9
+                },
+                {
+                    "name": "BLT",
+                    "value": 10
+                },
+                {
+                    "name": "JAL",
+                    "value": 11
+                },
+                {
+                    "name": "JALR",
+                    "value": 12
+                },
+                {
+                    "name": "LOAD",
+                    "value": 13
+                },
+                {
+                    "name": "STORE",
+                    "value": 14
+                },
+                {
+                    "name": "CSR_RW",
+                    "value": 15
+                },
+                {
+                    "name": "CSR_RS",
+                    "value": 16
+                },
+                {
+                    "name": "CSR_RC",
+                    "value": 17
+                },
+                {
+                    "name": "FENCE",
+                    "value": 18
+                },
+                {
+                    "name": "ECALL",
+                    "value": 19
                 }
             ],
             "test1::Colors_e": [
@@ -413,6 +629,631 @@
                     }
                 ]
             },
+            "r_aluop": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::AluOp"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "test1::AluOp"
+                    }
+                ]
+            },
+            "w_aluop": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::AluOp"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::AluOp"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "rw_aluop": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::AluOp"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::AluOp"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "r_stage": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "test1::Stage"
+                    }
+                ]
+            },
+            "w_stage": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "rw_stage": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "r_opval": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::OperandValue"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "test1::OperandValue"
+                    }
+                ]
+            },
+            "w_opval": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::OperandValue"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::OperandValue"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "rw_opval": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::OperandValue"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::OperandValue"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "r_commit": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "test1::CommitAction"
+                    }
+                ]
+            },
+            "w_commit": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "rw_commit": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "r_super": {
+                "type": "RegUN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "test1::SuperPacket"
+                    }
+                ]
+            },
+            "w_super": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "rw_super": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "fifo_aluop_rv": {
+                "type": "CRegN5",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "Q_OUT_0",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "D_IN_0",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "EN_0",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_1",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "D_IN_1",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "EN_1",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_2",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "D_IN_2",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "EN_2",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_3",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "D_IN_3",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "EN_3",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_4",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "D_IN_4",
+                        "type": "Maybe#(test1::AluOp)"
+                    },
+                    {
+                        "var": "EN_4",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "fifo_operand_rv": {
+                "type": "CRegN5",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "Q_OUT_0",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "D_IN_0",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "EN_0",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_1",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "D_IN_1",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "EN_1",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_2",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "D_IN_2",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "EN_2",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_3",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "D_IN_3",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "EN_3",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT_4",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "D_IN_4",
+                        "type": "Maybe#(test1::OperandValue)"
+                    },
+                    {
+                        "var": "EN_4",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "fifo_commit": {
+                "type": "FIFO2",
+                "ports": [
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "ENQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "FULL_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "DEQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EMPTY_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "D_OUT",
+                        "type": "test1::CommitAction"
+                    },
+                    {
+                        "var": "CLR",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "fifo_super": {
+                "type": "SizedFIFO",
+                "ports": [
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "ENQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "FULL_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "DEQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EMPTY_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "D_OUT",
+                        "type": "test1::SuperPacket"
+                    },
+                    {
+                        "var": "CLR",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "fifo_stage4": {
+                "type": "SizedFIFO",
+                "ports": [
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "ENQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "FULL_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "DEQ",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EMPTY_N",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "D_OUT",
+                        "type": "test1::Stage"
+                    },
+                    {
+                        "var": "CLR",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "cycle": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bit#(32)"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bit#(32)"
+                    }
+                ]
+            },
             "fsm_start_reg": {
                 "type": "RegN",
                 "ports": [
@@ -693,7 +1534,7 @@
             "Bool": [
                 {
                     "var": "",
-                    "type": "Bool",
+                    "type": "Bit#(1)",
                     "width": 1,
                     "min": 0,
                     "max": 0
