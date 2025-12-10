@@ -159,7 +159,7 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
     let bsv_lookup=BSV_LOOKUP.read().unwrap();
 
     let type_category = bsv_lookup.get(&type_name).unwrap_or(&TypeCategory::Bits);
-    warn!("TypeCategoryC= {:?}",type_category);
+    // warn!("TypeCategoryC= {:?}",type_category);
     
     match type_category {
         // Mapped to String because the provided VariableInfo enum lacks an Enum variant.
@@ -170,11 +170,11 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
             
             let struct_def = bsv_typedefs.get(&type_name)
                 .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
-            warn!("struct_def= {:?}",struct_def);
+            // warn!("struct_def= {:?}",struct_def);
             
             let field_info=get_struct_fields_info(struct_def, &bsv_lookup, &bsv_typedefs);
             // Call the recursive helper function
-            warn!("field_info= {:?}",field_info);
+            // warn!("field_info= {:?}",field_info);
             Ok(field_info)
         }
         TypeCategory::Bits => { if variable.num_bits == 1.into() {
