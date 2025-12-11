@@ -202,6 +202,40 @@ def handle_union(hsh):
                         if ty == v['type']:
                             print(f"fixing {ty} {v}")
                             v['type']=f'Bit#({v["width"]})'
+def handle_maybe(hsh):
+    """
+    for each type in typedef if the type name matches Maybe, split the content into two parts
+    1 is valid set to msb bit
+    the other is value set to rest of the bits.
+    """
+    mbe=re.compile(r"Maybe#\((.*)\)")
+    for module in hsh:
+        print(module,type(hsh[module]))
+        if isinstance(hsh[module],str):
+             continue
+        print(hsh[module].keys())
+        if 'typedefs' in hsh[module]:
+            print("has typedefs")
+            for ty,val in hsh[module]["typedefs"].items():
+                m=mbe.match(ty)
+                print(m,ty)
+                if m:
+                    hsh[module]["typedefs"][ty]=[{
+                            'var':"Valid",
+                            'type':"Bool",
+                            'width':1,
+                            'max': val[0]['max'],
+                            'min': val[0]['max']
+                            },
+                         {
+                            'var':"Value",
+                            'type':m.group(1),
+                            'width':val[0]['width']-1,
+                            'max': val[0]['max']-1,
+                            'min': val[0]['min']
+                            }
+                         ]
+
 def update_bluespec_json(json_filepath, all_enum_json_data):
     """
     Loads bluespec.json, determines which modules use which enums, and 
@@ -242,6 +276,7 @@ def update_bluespec_json(json_filepath, all_enum_json_data):
          print("⚠️ No new enum definitions were inserted or replaced. All found enums were either already correct or not referenced in the module usage.")
     
     handle_union(data)
+    handle_maybe(data)
     with open(json_filepath, 'w') as f:
         json.dump(data, f, indent=4)
         print(f"\n✅ Changes saved to {json_filepath}.")

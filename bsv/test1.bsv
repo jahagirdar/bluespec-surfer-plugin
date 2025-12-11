@@ -124,6 +124,7 @@ module mkTop(Empty);
    Reg#(Stage)      r_stage   <- mkReg(FETCH);
    Wire#(Stage)     w_stage   <- mkWire;
    RWire#(Stage)    rw_stage  <- mkRWire;
+   Reg#(Maybe#(Bit#(8))) mbe <-mkRegA(tagged Invalid);
 
    // Simple union
    Reg#(OperandValue)  r_opval   <- mkReg(tagged InvalidOp);
@@ -167,6 +168,7 @@ module mkTop(Empty);
 		FSM fsm <-mkFSM(s);
 		rule start;
 			fsm.start();
-			endrule
+			mbe <= tagged Valid 0;
+		endrule
 
 endmodule

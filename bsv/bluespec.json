@@ -76,13 +76,52 @@
                 }
             ],
             "Clock": [],
+            "Maybe#(Bit#(8))": [
+                {
+                    "var": "Valid",
+                    "type": "Bool",
+                    "width": 1,
+                    "max": 8,
+                    "min": 8
+                },
+                {
+                    "var": "Value",
+                    "type": "Bit#(8)",
+                    "width": 8,
+                    "max": 7,
+                    "min": 0
+                }
+            ],
             "Maybe#(test1::OperandValue)": [
                 {
-                    "var": "",
-                    "type": "Maybe#(type a)",
-                    "width": 68,
+                    "var": "Valid",
+                    "type": "Bool",
+                    "width": 1,
+                    "max": 67,
+                    "min": 67
+                },
+                {
+                    "var": "Value",
+                    "type": "test1::OperandValue",
+                    "width": 67,
+                    "max": 66,
+                    "min": 0
+                }
+            ],
+            "test1::Foo_st": [
+                {
+                    "var": "rgb",
+                    "type": "test1::Colors_e",
+                    "width": 6,
+                    "min": 8,
+                    "max": 13
+                },
+                {
+                    "var": "b",
+                    "type": "Bit#(numeric type a)",
+                    "width": 8,
                     "min": 0,
-                    "max": 67
+                    "max": 7
                 }
             ],
             "Bit#(4)": [
@@ -110,22 +149,6 @@
                     "max": 98
                 }
             ],
-            "test1::Foo_st": [
-                {
-                    "var": "rgb",
-                    "type": "test1::Colors_e",
-                    "width": 6,
-                    "min": 8,
-                    "max": 13
-                },
-                {
-                    "var": "b",
-                    "type": "Bit#(numeric type a)",
-                    "width": 8,
-                    "min": 0,
-                    "max": 7
-                }
-            ],
             "Bit#(32)": [
                 {
                     "var": "",
@@ -137,11 +160,18 @@
             ],
             "Maybe#(test1::AluOp)": [
                 {
-                    "var": "",
-                    "type": "Maybe#(type a)",
-                    "width": 6,
-                    "min": 0,
-                    "max": 5
+                    "var": "Valid",
+                    "type": "Bool",
+                    "width": 1,
+                    "max": 5,
+                    "min": 5
+                },
+                {
+                    "var": "Value",
+                    "type": "test1::AluOp",
+                    "width": 5,
+                    "max": 4,
+                    "min": 0
                 }
             ],
             "test1::OperandValue": [
@@ -760,6 +790,31 @@
                     {
                         "var": "WHAS",
                         "type": "Bool"
+                    }
+                ]
+            },
+            "mbe": {
+                "type": "RegA",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Maybe#(Bit#(8))"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Maybe#(Bit#(8))"
                     }
                 ]
             },
