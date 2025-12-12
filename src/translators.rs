@@ -1,3 +1,7 @@
+// Copyright: Copyright (c) 2025 Dyumnin Semiconductors. All rights reserved.
+// Author: Vijayvithal <jahagirdar.vs@gmail.com>
+// Created on: 2025-12-12
+// Description: Translation related functions.
 // =========================================================================
 // src/translators.rs (Revised)
 // =========================================================================

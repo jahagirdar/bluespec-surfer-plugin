@@ -1,3 +1,8 @@
+//  Copyright: Copyright (c) 2025 Dyumnin Semiconductors. All rights reserved.
+//  Author: Vijayvithal <jahagirdar.vs@gmail.com>
+//  Created on: 2025-12-12
+//  Description: Importing design data from json file.
+
 // =========================================================================
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
