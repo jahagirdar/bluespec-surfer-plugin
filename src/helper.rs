@@ -6,7 +6,7 @@
 // =========================================================================
 // src/helper.rs (Revised)
 // =========================================================================
-use extism_pdk::{warn};
+use extism_pdk::{debug};
 use once_cell::sync::Lazy;     // <--- ADDED
 use std::sync::RwLock;          // <--- ADDED
 use std::sync::RwLockReadGuard;          // <--- ADDED
@@ -142,9 +142,9 @@ fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
     if let Some(caps) = re.captures(name) {
         let base_name = caps.name("base").unwrap().as_str().to_string();
         let port_name = caps.name("port").unwrap().as_str().to_string();
-        warn!("Matching base ={:?} port= {:?}",base_name,port_name);
+        debug!("Matching base ={:?} port= {:?}",base_name,port_name);
         if PREFERRED_PORTS.contains(&port_name.to_uppercase().as_str()) {
-            warn!("Matched {:?}",port_name);
+            debug!("Matched {:?}",port_name);
             return (base_name, SignalNameFormat::PortedVar(port_name));
         }
     }

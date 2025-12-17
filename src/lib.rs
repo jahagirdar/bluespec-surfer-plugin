@@ -59,7 +59,11 @@ pub fn new() -> FnResult<()> {
     extism_pdk::info!("Bluespec translator (Beta) https://github.com/jahagirdar/bluespec-surfer-plugin");
     initialize_static_data().map_err(|e| Error::msg(e.to_string()).into())
 }
-
+#[plugin_fn]
+pub fn reload() -> FnResult<()> {
+    extism_pdk::info!("Bluespec translator (Beta) https://github.com/jahagirdar/bluespec-surfer-plugin");
+    initialize_static_data().map_err(|e| Error::msg(e.to_string()).into())
+}
 #[plugin_fn]
 pub fn translates(variable: VariableMeta<(), ()>) -> FnResult<TranslationPreference> {
     // 1. Get the type name

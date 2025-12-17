@@ -264,6 +264,15 @@
                     "max": 130
                 }
             ],
+            "Bit#(3)": [
+                {
+                    "var": "",
+                    "type": "Bit#(numeric type a)",
+                    "width": 3,
+                    "min": 0,
+                    "max": 2
+                }
+            ],
             "test1::AluOp": [
                 {
                     "name": "ADD",
@@ -1297,7 +1306,7 @@
                     },
                     {
                         "var": "D_IN",
-                        "type": "Bit#(32)"
+                        "type": "Bit#(4)"
                     },
                     {
                         "var": "EN",
@@ -1305,7 +1314,7 @@
                     },
                     {
                         "var": "Q_OUT",
-                        "type": "Bit#(32)"
+                        "type": "Bit#(4)"
                     }
                 ]
             },
@@ -1435,7 +1444,7 @@
                     },
                     {
                         "var": "D_IN",
-                        "type": "Bit#(4)"
+                        "type": "Bit#(3)"
                     },
                     {
                         "var": "EN",
@@ -1443,7 +1452,7 @@
                     },
                     {
                         "var": "Q_OUT",
-                        "type": "Bit#(4)"
+                        "type": "Bit#(3)"
                     }
                 ]
             },
@@ -1520,6 +1529,241 @@
                 ]
             },
             "fsm_state_can_overlap": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_start_reg": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_start_wire": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_start_reg_1": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_start_reg_2": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_abort": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_state_mkFSMstate": {
+                "type": "ConfigRegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bit#(4)"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bit#(4)"
+                    }
+                ]
+            },
+            "myfsm_state_set_pw": {
+                "type": "RWire0",
+                "ports": [
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_state_overlap_pw": {
+                "type": "RWire0",
+                "ports": [
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_state_fired": {
+                "type": "RegN",
+                "ports": [
+                    {
+                        "var": "CLK",
+                        "type": "Clock"
+                    },
+                    {
+                        "var": "RST",
+                        "type": "Reset"
+                    },
+                    {
+                        "var": "D_IN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "EN",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "Q_OUT",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_state_fired_1": {
+                "type": "RWire",
+                "ports": [
+                    {
+                        "var": "WVAL",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WSET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WGET",
+                        "type": "Bool"
+                    },
+                    {
+                        "var": "WHAS",
+                        "type": "Bool"
+                    }
+                ]
+            },
+            "myfsm_state_can_overlap": {
                 "type": "RegN",
                 "ports": [
                     {
