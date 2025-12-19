@@ -1,8 +1,12 @@
+// Copyright: Copyright (c) 2025 Dyumnin Semiconductors. All rights reserved.
+// Author: Vijayvithal <jahagirdar.vs@gmail.com>
+// Created on: 2025-12-12
+// Description: Entrypoint for wasm plugin
 // =========================================================================
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
 
-use extism_pdk::{plugin_fn, FnResult, Json, Error, debug,warn };
+use extism_pdk::{plugin_fn, FnResult, Json, Error, debug };
 
 pub use surfer_translation_types::plugin_types::TranslateParams;
 use surfer_translation_types::{
@@ -55,7 +59,11 @@ pub fn new() -> FnResult<()> {
     extism_pdk::info!("Bluespec translator (Beta) https://github.com/jahagirdar/bluespec-surfer-plugin");
     initialize_static_data().map_err(|e| Error::msg(e.to_string()).into())
 }
-
+#[plugin_fn]
+pub fn reload() -> FnResult<()> {
+    extism_pdk::info!("Bluespec translator (Beta) https://github.com/jahagirdar/bluespec-surfer-plugin");
+    initialize_static_data().map_err(|e| Error::msg(e.to_string()).into())
+}
 #[plugin_fn]
 pub fn translates(variable: VariableMeta<(), ()>) -> FnResult<TranslationPreference> {
     // 1. Get the type name
@@ -159,7 +167,7 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
     let bsv_lookup=BSV_LOOKUP.read().unwrap();
 
     let type_category = bsv_lookup.get(&type_name).unwrap_or(&TypeCategory::Bits);
-    warn!("TypeCategoryC= {:?}",type_category);
+    // warn!("TypeCategoryC= {:?}",type_category);
     
     match type_category {
         // Mapped to String because the provided VariableInfo enum lacks an Enum variant.
@@ -170,11 +178,11 @@ pub fn variable_info(variable: VariableMeta<(), ()>) -> FnResult<VariableInfo> {
             
             let struct_def = bsv_typedefs.get(&type_name)
                 .ok_or_else(|| Error::msg(format!("Struct definition missing for: {}", type_name)))?;
-            warn!("struct_def= {:?}",struct_def);
+            // warn!("struct_def= {:?}",struct_def);
             
             let field_info=get_struct_fields_info(struct_def, &bsv_lookup, &bsv_typedefs);
             // Call the recursive helper function
-            warn!("field_info= {:?}",field_info);
+            // warn!("field_info= {:?}",field_info);
             Ok(field_info)
         }
         TypeCategory::Bits => { if variable.num_bits == 1.into() {

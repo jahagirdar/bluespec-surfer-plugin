@@ -1,6 +1,12 @@
+// Copyright: Copyright (c) 2025 Dyumnin Semiconductors. All rights reserved.
+// Author: Vijayvithal <jahagirdar.vs@gmail.com>
+// Created on: 2025-12-12
+// Helper scripts: Dumping spot for all low level functions.
+//
 // =========================================================================
 // src/helper.rs (Revised)
 // =========================================================================
+use extism_pdk::{debug};
 use once_cell::sync::Lazy;     // <--- ADDED
 use std::sync::RwLock;          // <--- ADDED
 use std::sync::RwLockReadGuard;          // <--- ADDED
@@ -120,7 +126,7 @@ pub fn create_no_translation_result() -> TranslationResult {
 
 // --- Constants for Port Priority ---
 const IGNORED_PORTS: [&str; 8] = ["CLK", "RST", "EN", "CLR","FULL_N","EMPTY_N","ENQ","DEQ"];
-const PREFERRED_PORTS: [&str; 5] = ["Q_OUT","D_OUT", "Probe", "D_IN","WGET"];
+const PREFERRED_PORTS: [&str; 7] = ["Q_OUT","D_OUT", "Probe","PROBE", "D_IN","WGET", "WHAS"];
 
 #[derive(Debug)]
 enum SignalNameFormat {
@@ -131,17 +137,20 @@ enum SignalNameFormat {
 
 fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
     // Regex to match "BASE_NAME_PORT" or "BASE_NAME$PORT"
-    let re = Regex::new(r"^(?P<base>[a-zA-Z0-9]+)[\_$](?P<port>[a-zA-Z0-9]+)$").unwrap();
+    let re = Regex::new(r"^(?P<base>[a-zA-Z0-9_]+)[\_$](?P<port>[a-zA-Z0-9]+)$").unwrap();
 
     if let Some(caps) = re.captures(name) {
         let base_name = caps.name("base").unwrap().as_str().to_string();
         let port_name = caps.name("port").unwrap().as_str().to_string();
-        if PREFERRED_PORTS.contains(&port_name.as_str()) {
+        debug!("Matching base ={:?} port= {:?}",base_name,port_name);
+        if PREFERRED_PORTS.contains(&port_name.to_uppercase().as_str()) {
+            debug!("Matched {:?}",port_name);
             return (base_name, SignalNameFormat::PortedVar(port_name));
         }
     }
 
     // Default to FullVar
+    debug!("No Matching for ={:?} ",name);
     (name.to_string(), SignalNameFormat::FullVar(name.to_string()))
 }
 
@@ -201,7 +210,7 @@ pub fn get_variable_type_name(variable: &VariableMeta<(), ()>) -> Option<String>
             
             // a) Check preferred ports (highest priority first)
             for preferred_port in PREFERRED_PORTS.iter() {
-                if let Some(port) = ports.iter().find(|p| p.name == *preferred_port) {
+                if let Some(port) = ports.iter().find(|p| p.name.to_uppercase() == *preferred_port) {
                     return Some(port.type_name.clone());
                 }
             }
