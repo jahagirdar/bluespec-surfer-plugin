@@ -97,6 +97,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts # Downloads artifacts into the 'artifacts/' directory
+      - name: 🔄 Rename WASM Files for Unique Upload Names
+        run: |
+          for dir in artifacts/*/; do
+            if [ -f "${dir}bluespec_translator.wasm" ]; then
+              platform=$(basename "$dir")
+              mv "${dir}bluespec_translator.wasm" "${dir}${platform}.wasm"
+              echo "Renamed to ${platform}.wasm"
+            fi
+          done
 
       - name: 📦 List Downloaded Files
         # Sanity check to ensure files are present
@@ -109,3 +118,5 @@ jobs:
           files: artifacts/*/*.wasm
           draft: false
           prerelease: false
+          fail_on_unmatched_files: true
+          overwrite_files: false
