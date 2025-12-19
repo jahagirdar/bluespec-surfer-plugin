@@ -6,7 +6,7 @@
 // lib.rs: Extism Entry Points and Dependencies
 // =========================================================================
 
-use extism_pdk::{plugin_fn, FnResult, Json, Error, debug,warn };
+use extism_pdk::{plugin_fn, FnResult, Json, Error, debug };
 
 pub use surfer_translation_types::plugin_types::TranslateParams;
 use surfer_translation_types::{

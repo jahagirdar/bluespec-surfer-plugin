@@ -126,7 +126,7 @@ pub fn create_no_translation_result() -> TranslationResult {
 
 // --- Constants for Port Priority ---
 const IGNORED_PORTS: [&str; 8] = ["CLK", "RST", "EN", "CLR","FULL_N","EMPTY_N","ENQ","DEQ"];
-const PREFERRED_PORTS: [&str; 6] = ["Q_OUT","D_OUT", "Probe", "D_IN","WGET", "WHAS"];
+const PREFERRED_PORTS: [&str; 7] = ["Q_OUT","D_OUT", "Probe","PROBE", "D_IN","WGET", "WHAS"];
 
 #[derive(Debug)]
 enum SignalNameFormat {
@@ -137,7 +137,7 @@ enum SignalNameFormat {
 
 fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
     // Regex to match "BASE_NAME_PORT" or "BASE_NAME$PORT"
-    let re = Regex::new(r"^(?P<base>[a-zA-Z0-9]+)[\_$](?P<port>[a-zA-Z0-9]+)$").unwrap();
+    let re = Regex::new(r"^(?P<base>[a-zA-Z0-9_]+)[\_$](?P<port>[a-zA-Z0-9]+)$").unwrap();
 
     if let Some(caps) = re.captures(name) {
         let base_name = caps.name("base").unwrap().as_str().to_string();
@@ -150,6 +150,7 @@ fn parse_signal_name(name: &str) -> (String, SignalNameFormat) {
     }
 
     // Default to FullVar
+    debug!("No Matching for ={:?} ",name);
     (name.to_string(), SignalNameFormat::FullVar(name.to_string()))
 }
 
