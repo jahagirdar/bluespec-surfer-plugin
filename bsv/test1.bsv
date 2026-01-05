@@ -3,12 +3,13 @@ import StmtFSM::*;
 import FIFO::*;
 import Vector::*;
 import SpecialFIFOs::*;
+import b::*;
 // ==============================================================
 // 1. Enum
 // ==============================================================
 
 typedef enum {
-      	ADD, SUB, AND, OR, XOR,
+      	ADD, SUB, AND, OR, XOR=21,
       	SLL, SRL, SRA,
       	BEQ, BNE, BLT, JAL, JALR,
       	LOAD, STORE,
@@ -78,24 +79,88 @@ typedef struct {
 }BitLarge deriving(Bits, Eq, FShow);
 
 typedef struct {
-	Foo_st f;
+	Foo_st foo;
 	Bit#(10)a;
-	Foo_st t;
+	Foo_st bax;
 } Bar_st deriving(Bits, Eq, FShow);
 
 interface Ifc_a;
 	method Action in(Bit#(32) x, Bar_st b);
 	method Foo_st out;
+	interface Ifc_b yesmen;
 endinterface
 
 (*synthesize*)
-module mkA(Ifc_a);
+module mkV(Ifc_a);
 	Reg#(Bar_st) rb <-mkRegA(unpack(0));
+	Vector#(3,Bar_st) rb3 <-replicateM(mkRegA(unpack(0)));
+
 	method Action in(Bit#(32) x, Bar_st b);
 	endmethod
 	method Foo_st out;
 		return unpack(0);
 	endmethod
+	interface Ifc_b yesmen;
+		method yes=True;
+	method ActionValue#(Bool) no (Bool say);
+		return say;
+	endmethod
+	endinterface
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(*synthesize*)
+module mkA(Ifc_a);
+	Reg#(Bar_st) rbar <-mkRegA(unpack(0));
+	Ifc_a vv <- mkV();
+	let abc=vv.yesmen.yes();
+	let xyz=rbar.foo.rgb;
+	method Action in(Bit#(32) x, Bar_st b);
+	endmethod
+	method Foo_st out;
+		return unpack(0);
+	endmethod
+	interface Ifc_b yesmen;
+		method yes=True;
+	endinterface
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 endmodule
 module mkB(Ifc_a);
@@ -107,6 +172,9 @@ module mkB(Ifc_a);
 	method Foo_st out;
 		return unpack(0);
 	endmethod
+	interface Ifc_b yesmen;
+		method yes=True;
+	endinterface
 
 endmodule
 (*synthesize*)

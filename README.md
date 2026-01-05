@@ -9,6 +9,7 @@ git clone https://gitlab.com/surfer-project/surfer.git
 git clone git@github.com:jahagirdar/bluespec-surfer-plugin.git
 cd bluespec-surfer-plugin
 make
+cp target/wasm32-unknown-unknown/release/bluespec_translator.wasm ~/.local/share/surfer/translators/
 ```
 you will need rust and cargo, use your distribution specific methods to load it
 
